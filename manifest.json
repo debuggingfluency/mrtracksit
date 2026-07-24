@@ -1,0 +1,61 @@
+{
+  "manifest_version": 3,
+  "name": "MrTracksIt",
+  "description": "Track watch time by language across supported video sites.",
+  "version": "1.0",
+  "permissions": ["storage", "tabs", "scripting", "sidePanel"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://www.youtube.com/*"],
+      "js": ["shared-content.js"]
+    },
+    {
+      "matches": ["*://www.netflix.com/watch/*"],
+      "js": ["shared-content.js"]
+    },
+    {
+      "matches": ["*://www.disneyplus.com/play/*"],
+      "js": ["shared-content.js"]
+    },
+    {
+      "matches": ["*://play.hbomax.com/video/*", "*://play.hbomax.com/*"],
+      "js": ["shared-content.js"]
+    },
+    {
+      "matches": ["*://app.dreaming.com/*"],
+      "js": ["shared-content.js"]
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["shared-content.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["inject.js"],
+      "matches": [
+        "*://www.youtube.com/*",
+        "*://www.netflix.com/*",
+        "*://www.disneyplus.com/*",
+        "*://www.crunchyroll.com/*",
+        "http://127.0.0.1:32400/*"
+      ]
+    },
+    {
+      "resources": ["flags/*"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "side_panel": {
+    "default_path": "popup.html"
+  },
+  "action": {
+    "default_title": "MrTracksIt",
+    "default_icon": {
+      "16": "icon.png"
+    }
+  }
+}

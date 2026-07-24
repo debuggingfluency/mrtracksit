@@ -1,0 +1,273 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="popup.css" />
+    <title>MrTracksIt</title>
+  </head>
+  <body>
+
+    <!-- Always-visible top bar -->
+    <div class="close-header">
+      <div class="close-header-right" style="margin-left:auto">
+        <button class="settings-button" id="watchedLanguagesButton" title="Settings">⚙</button>
+        <div class="lang-dropdown-wrapper">
+          <button class="language-icon-button" id="languageSelectionButton" title="Switch language">
+            <img class="current-language-flag" id="currentLanguageFlag" src="flags/english.svg" alt="English" />
+            <span class="lang-dropdown-chevron">▾</span>
+          </button>
+          <div class="lang-dropdown hidden" id="langDropdown"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Main view ─────────────────────────────────── -->
+    <div id="mainView">
+
+      <!-- Tracking controls row -->
+      <div class="tracking-controls">
+        <div class="tracking-left">
+          <span class="tracking-label">Tracking</span>
+          <button class="tracking-toggle" id="trackingIndicator" title="Toggle tracking" aria-label="Tracking" aria-pressed="true">
+            <span class="toggle-thumb"></span>
+          </button>
+        </div>
+        <div class="tracking-center">
+          <span class="tracking-stat-label">Total Hours</span>
+          <span class="tracking-stat-number" id="totalHoursValue">0</span>
+        </div>
+        <div class="tracking-right">
+          <span class="tracking-stat-label">Day Streak</span>
+          <div class="stats-value-row">
+            <span class="streak-number streak-number--at-risk" id="dayStreakValue">0</span>
+            <span class="streak-flame streak-flame--secured" id="streakFire" data-streak-flame aria-hidden="true" hidden>🔥</span>
+          </div>
+          <div class="streak-status-label streak-status-label--at-risk" id="streakStatusLabel">AT RISK TODAY</div>
+        </div>
+      </div>
+
+      <!-- Stats bar: Daily Goal -->
+      <div class="stats-bar">
+        <div class="stats-bar-content">
+          <span class="stats-bar-label">Daily Goal</span>
+          <!-- display mode -->
+          <div class="mt-goal__display" id="goalDisplay">
+            <span class="mt-goal__cur" id="goalCurValue">0</span>
+            <span class="mt-goal__sep" id="goalSepText"> / 15 mins</span>
+            <button class="mt-goal__edit" id="dailyGoalButton" aria-label="Edit daily goal">✎</button>
+          </div>
+          <!-- edit mode (hidden by default via CSS) -->
+          <div class="mt-goal__editrow" id="goalEditor">
+            <input id="goalInput" class="mt-goal__input" type="text" inputmode="numeric" value="15" aria-label="Daily goal in minutes" />
+            <span class="mt-goal__unit">mins</span>
+            <button class="mt-iconbtn mt-iconbtn--save" id="goalSave" aria-label="Save goal">✓</button>
+            <button class="mt-iconbtn mt-iconbtn--cancel" id="goalCancel" aria-label="Cancel">✕</button>
+          </div>
+        </div>
+        <div class="goal-progress-track">
+          <div class="goal-progress-fill" id="goalProgressFill"></div>
+        </div>
+        <div class="mt-goal__hint" id="goalHint">Enter to save · Esc to cancel</div>
+      </div>
+
+      <div class="header">
+        <button class="nav-button" id="prevMonth">&lt;</button>
+        <div class="month-year" id="monthYear"></div>
+        <button class="nav-button" id="nextMonth">&gt;</button>
+      </div>
+
+      <div class="calendar" id="calendar"></div>
+      <div class="calendar-legend">
+        <span>Less</span>
+        <div class="calendar-legend__swatches">
+          <i style="background:#0d5e4a"></i>
+          <i style="background:#0f6e56"></i>
+          <i style="background:#168a64"></i>
+          <i style="background:#1d9e75"></i>
+        </div>
+        <span>More</span>
+      </div>
+
+      <div class="chart-section">
+        <div class="chart-header">
+          <span class="chart-title">Avg. Daily Watch Time</span>
+          <div class="chart-tabs">
+            <button class="chart-tab active" data-period="7">7d</button>
+            <button class="chart-tab" data-period="30">30d</button>
+            <button class="chart-tab" data-period="90">3mo</button>
+            <button class="chart-tab" data-period="180">6mo</button>
+          </div>
+        </div>
+        <div class="chart-container">
+          <div class="mt-chart-wrap" style="position:relative;width:100%;height:100%;">
+            <canvas id="watchTimeChart"></canvas>
+            <div class="mt-tip" id="mt-tip" hidden></div>
+          </div>
+          <div class="chart-empty hidden" id="chartEmpty">No data yet for this language</div>
+        </div>
+        <div class="chart-summary" id="chartSummary">
+          <div class="chart-stat">
+            <span class="chart-stat-label">Avg / day</span>
+            <span class="chart-stat-value" id="chartAvg">—</span>
+          </div>
+          <div class="chart-stat">
+            <span class="chart-stat-label">Best day</span>
+            <span class="chart-stat-value" id="chartBest">—</span>
+          </div>
+          <div class="chart-stat">
+            <span class="chart-stat-label">Days active</span>
+            <span class="chart-stat-value" id="chartDays">—</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── Settings view (full sidebar) ──────────────── -->
+    <div id="settingsView" class="hidden">
+      <div class="settings-view-header">
+        <button id="settingsBack" class="settings-back-btn">&lt;</button>
+        <h3 class="settings-view-title">Settings</h3>
+      </div>
+
+      <div class="settings-tabs">
+        <button class="settings-tab active" data-tab="general">General</button>
+        <button class="settings-tab" data-tab="languages">Languages</button>
+      </div>
+
+      <!-- General tab -->
+      <div class="settings-tab-panel" id="tab-general">
+        <div class="settings-section">
+          <h4>Appearance</h4>
+          <div class="theme-selector" id="themeSelector">
+            <button class="theme-btn" data-theme="light">Light Mode</button>
+            <button class="theme-btn" data-theme="dark">Dark Mode</button>
+            <button class="theme-btn" data-theme="system">System</button>
+          </div>
+        </div>
+        <div class="section-divider"></div>
+        <div class="settings-section">
+          <h4>Custom Trackers</h4>
+          <div class="custom-trackers-list" id="customTrackersList"></div>
+          <button id="openCustomTrackerModalButton">+ Add Custom Tracker</button>
+        </div>
+        <div class="section-divider"></div>
+        <div class="settings-section">
+          <h4>Backup</h4>
+          <div class="data-actions">
+            <button id="exportDataButton">Export Data</button>
+            <button id="importDataButton">Import Data</button>
+            <input type="file" id="importFileInput" accept=".json" style="display:none" />
+          </div>
+        </div>
+        <div class="section-divider"></div>
+        <div class="settings-section">
+          <h4>Migration</h4>
+          <div class="sync-row-inline">
+            <button id="syncLocalToSyncButton">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+              Migrate Local → Sync
+            </button>
+            <span class="sync-status" id="syncStatus"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Languages tab -->
+      <div class="settings-tab-panel hidden" id="tab-languages">
+        <div class="watched-languages-section">
+          <h4>Tracked Languages</h4>
+          <div class="watched-languages-grid" id="watchedLanguagesGrid"></div>
+        </div>
+        <div class="section-divider"></div>
+        <div class="watched-languages-section">
+          <h4>Available Languages</h4>
+          <div class="available-languages-grid" id="availableLanguagesGrid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Modals (position: fixed, work from any context) ── -->
+
+    <!-- Confirmation Modal -->
+    <div class="modal-overlay hidden" id="confirmModal">
+      <div class="modal confirmation-modal">
+        <div class="modal-header">
+          <h3>Remove Language</h3>
+          <button class="close-button" id="closeConfirmModal">×</button>
+        </div>
+        <div class="modal-content">
+          <p id="confirmMessage">Are you sure you want to remove this language from tracking?</p>
+          <div class="confirm-options">
+            <label class="confirm-checkbox">
+              <input type="checkbox" id="removeHistoryCheckbox" />
+              <span>Remove tracked history (this will delete all watch time data for this language)</span>
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="confirmYes">Remove</button>
+          <button id="confirmNo">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Manual Time Entry Modal -->
+    <div class="modal-overlay hidden" id="manualEntryModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Modify Watch Time</h3>
+          <button class="close-button" id="closeManualEntryModal">×</button>
+        </div>
+        <div class="modal-content hero-modal-content">
+          <p class="modal-date" id="modalDate"></p>
+          <div class="hero-display">
+            <input type="text" inputmode="numeric" id="manualMinutes" class="hero-number" placeholder="0" autocomplete="off" />
+            <div class="hero-underline"></div>
+            <p class="hero-label">Minutes</p>
+          </div>
+          <div class="validation-message hidden" id="validationMessage"></div>
+        </div>
+        <div class="modal-footer">
+          <button id="clearTimeButton">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:4px">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>Clear Time
+          </button>
+          <button id="cancelManualEntry">Cancel</button>
+          <button id="addTimeButton">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Custom Tracker Modal -->
+    <div class="modal-overlay hidden" id="customTrackerModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3>Add Custom Tracker</h3>
+          <button class="close-button" id="closeCustomTrackerModal">×</button>
+        </div>
+        <div class="modal-content">
+          <div class="custom-tracker-form">
+            <input type="text" id="ctName" class="custom-tracker-input" placeholder="Name (e.g. My Video Site)" />
+            <input type="text" id="ctHostname" class="custom-tracker-input" placeholder="Hostname (e.g. videos.example.com)" />
+            <input type="text" id="ctUrlPattern" class="custom-tracker-input" placeholder="URL pattern (e.g. watch) — blank = all pages" />
+            <select id="ctSelectorType" class="custom-tracker-select">
+              <option value="video">Standard HTML5 (video)</option>
+              <option value=".vjs-tech">Video.js (.vjs-tech)</option>
+              <option value="custom">Custom selector…</option>
+            </select>
+            <input type="text" id="ctCustomSelector" class="custom-tracker-input hidden" placeholder="CSS selector (e.g. .player video)" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="cancelCustomTrackerButton">Cancel</button>
+          <button id="saveCustomTrackerButton">Add Tracker</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>
